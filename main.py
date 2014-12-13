@@ -1,7 +1,7 @@
 import numpy as np
 import random
 from operator import itemgetter
-
+import Image
 """
 The beginnings of this where based on https://jakevdp.github.io/blog/2013/08/07/conways-game-of-life/
 """
@@ -15,8 +15,9 @@ class Population:
         self.percentage = percentage
         self.pop_size = pop_size
         self.iter_limit = iter_limit
-        self.mutate_percent = 0.03
+        self.mutate_percent = 0.05
         self.mutate_ratio = {'l': 8, 's': 3, 't': 2}
+        self.fitness_type = 0
         for iteration in xrange(self.pop_size):
             game = np.zeros(self.game_size, dtype=bool)
             game_random = np.random.random(self.game_size)
@@ -43,10 +44,18 @@ class Population:
         for being in self.population:
             tmp_game = being['start'].copy()
             iteration = 0
+            begin_count = np.sum(tmp_game)
             while True in tmp_game and iteration < self.iter_limit:
                 tmp_game = self.life(tmp_game)
                 iteration += 1
-            fitness = iteration * np.sum(tmp_game)
+            if self.fitness_type == 0:
+                fitness = iteration * np.sum(tmp_game)
+            elif self.fitness_type == 1:
+                if np.sum(tmp_game) == 0:
+                    fitness = 0
+                else:
+                    fitness = iteration * (1.0 / (float(begin_count) / np.sum(tmp_game)))
+
             tmp_pop.append({'start': being['start'], 'iterations': iteration, 'count': np.sum(tmp_game), 'fitness': fitness})
         self.population = tmp_pop
 
@@ -54,6 +63,7 @@ class Population:
         tmp_game = game.copy()
         mutation_number = int(self.game_size[0] * self.game_size[1] * self.mutate_percent)
 
+        # Flip
         for mutation in xrange(mutation_number):
             random_x = random.randint(0, self.game_size[0]-1)
             random_y = random.randint(0, self.game_size[1]-1)
@@ -61,6 +71,18 @@ class Population:
                 tmp_game[random_x][random_y] = False
             elif game[random_x][random_y] == False:
                 tmp_game[random_x][random_y] = True
+        # Decay
+        decay_target = mutation_number # / 2 + 1
+        decay_count = 0
+        life_locations = []
+        for i in xrange(len(game)):
+            for ii in xrange(len(game[i])):
+                if game[i][ii] == True:
+                    life_locations.append([i, ii])
+        while decay_count < decay_target:
+            decay_life_target = random.choice(life_locations)
+            tmp_game[decay_life_target[0]][decay_life_target[1]] = False
+            decay_count += 1
 
         return tmp_game
 
@@ -114,8 +136,22 @@ class Population:
             print being['count'], being['fitness'], being['iterations']
 
 
-sim = Population(game_size=(15, 15), pop_size=20, percentage=0.95, iter_limit=500)
+sim = Population(game_size=(50, 50), pop_size=50, percentage=0.95, iter_limit=200)
 
-for i in xrange(30):
+for i in xrange(1000):
     print 'Run', i
     sim.evolve()
+
+map = sim.population[0]['start']
+for count in xrange(sim.iter_limit):
+    img = Image.new('RGB', (sim.game_size[0], sim.game_size[1]), "white")  # create a new black image
+    pixels = img.load()
+    for i in xrange(len(map)):
+        for ii in xrange(len(map[i])):
+            if map[i][ii] == True:
+                pixels[i, ii] = (0, 0, 0)
+
+    img.save(str(count) + '.png')
+
+    map = sim.life(map.copy())
+
