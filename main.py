@@ -132,6 +132,7 @@ class Population:
         self.play()
 
         print 'Evolution Summary'
+        print 'Count - Fitness - Iterations'
         for being in sorted(self.population, key=itemgetter('fitness'), reverse=True)[:3]:
             print being['count'], being['fitness'], being['iterations']
 
