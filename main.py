@@ -15,9 +15,10 @@ class Population:
         self.percentage = percentage
         self.pop_size = pop_size
         self.iter_limit = iter_limit
-        self.mutate_percent = 0.05
+        self.iter_count = 0
+        self.mutate_percent = 0.005
         self.mutate_ratio = {'l': 8, 's': 3, 't': 2}
-        self.fitness_type = 0
+        self.fitness_type = 1
         for iteration in xrange(self.pop_size):
             game = np.zeros(self.game_size, dtype=bool)
             game_random = np.random.random(self.game_size)
@@ -40,6 +41,9 @@ class Population:
         return X.astype(bool)
 
     def play(self):
+        """
+        Simulates all games in population
+        """
         tmp_pop = []
         for being in self.population:
             tmp_game = being['start'].copy()
@@ -51,7 +55,7 @@ class Population:
             if self.fitness_type == 0:
                 fitness = iteration * np.sum(tmp_game)
             elif self.fitness_type == 1:
-                if np.sum(tmp_game) == 0:
+                if np.sum(tmp_game) == 0:  # Stops 'divide by 0' errors
                     fitness = 0
                 else:
                     fitness = iteration * (1.0 / (float(begin_count) / np.sum(tmp_game)))
@@ -61,9 +65,9 @@ class Population:
 
     def mutate(self, game):
         tmp_game = game.copy()
-        mutation_number = int(self.game_size[0] * self.game_size[1] * self.mutate_percent)
+        mutation_number = int(self.game_size[0] * self.game_size[1] * self.mutate_percent) + 1
 
-        # Flip
+        # Flips the selected coordinate.
         for mutation in xrange(mutation_number):
             random_x = random.randint(0, self.game_size[0]-1)
             random_y = random.randint(0, self.game_size[1]-1)
@@ -71,8 +75,9 @@ class Population:
                 tmp_game[random_x][random_y] = False
             elif game[random_x][random_y] == False:
                 tmp_game[random_x][random_y] = True
-        # Decay
-        decay_target = mutation_number # / 2 + 1
+
+        # Erases mmutation_number of cells
+        decay_target = mutation_number  # / 2 + 1
         decay_count = 0
         life_locations = []
         for i in xrange(len(game)):
@@ -92,25 +97,40 @@ class Population:
             return tmp_game
 
         while np.array_equal(tmp_game, game):
-            # print 'Discarded failed mutation'
+            """
+            This loop discards mutations that have had no effect
+            """
             tmp_game = self.mutate(game)
         return tmp_game
 
     def merge(self):
         """
-        This will merge two games
+        This will merge two games.
+        For use in 'mating'
         """
 
     def evolve(self):
+        """
+        This creates a new population based on the old one.
+        """
         tmp_pop = []
         fittest = sorted(self.population, key=itemgetter('fitness'), reverse=True)
-        # print fittest[0]['fitness']
-        # print fittest[-1]['fitness']
 
         tmp_r_num = self.pop_size / (self.mutate_ratio['l'] + self.mutate_ratio['s'] + self.mutate_ratio['t'])
         second_number = int(tmp_r_num * self.mutate_ratio['s']) - 1
         third_number = int(tmp_r_num * self.mutate_ratio['t']) - 1
         leader_number = self.pop_size - second_number - third_number - 1
+
+        # Write leader image
+        img = Image.new('RGB', (self.game_size[0], self.game_size[1]), "white")  # create a new black image
+        pixels = img.load()
+        for i in xrange(len(fittest[0]['start'])):
+            for ii in xrange(len(fittest[0]['start'][i])):
+                if fittest[0]['start'][i][ii] == True:
+                    pixels[i, ii] = (0, 0, 0)
+
+        img.save('images/leader_' + str(self.iter_count) + '.png')
+        self.iter_count += 1
 
         tmp_pop.append(fittest[0])  # Always keep the leader
         tmp_pop.append(fittest[1])
@@ -137,22 +157,22 @@ class Population:
             print being['count'], being['fitness'], being['iterations']
 
 
-sim = Population(game_size=(50, 50), pop_size=50, percentage=0.95, iter_limit=200)
+sim = Population(game_size=(50, 50), pop_size=50, percentage=0.99, iter_limit=200)
 
-for i in xrange(1000):
+for i in xrange(100):
     print 'Run', i
     sim.evolve()
 
-map = sim.population[0]['start']
+game_map = sim.population[0]['start']
 for count in xrange(sim.iter_limit):
     img = Image.new('RGB', (sim.game_size[0], sim.game_size[1]), "white")  # create a new black image
     pixels = img.load()
-    for i in xrange(len(map)):
-        for ii in xrange(len(map[i])):
-            if map[i][ii] == True:
+    for i in xrange(len(game_map)):
+        for ii in xrange(len(game_map[i])):
+            if game_map[i][ii] == True:
                 pixels[i, ii] = (0, 0, 0)
 
-    img.save(str(count) + '.png')
+    img.save('images/' + str(count) + '.png')
 
-    map = sim.life(map.copy())
+    game_map = sim.life(game_map.copy())
 
