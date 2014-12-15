@@ -18,18 +18,23 @@ Examples
 
 - Leader for fitness algorithm 0
 
-![alt tag](https://raw.github.com/B0073D/gogol/master/leader_0.gif)
+![alt tag](https://raw.github.com/B0073D/gogol/master/images/leader_0.gif)
 
 - Leader for fitness algorithm 1
 
-![alt tag](https://raw.github.com/B0073D/gogol/master/leader_1.gif)
+![alt tag](https://raw.github.com/B0073D/gogol/master/images/leader_1.gif)
 
 Smaller examples:
 
 - Leader for fitness algorithm 0
 
-![alt tag](https://raw.github.com/B0073D/gogol/master/leader_0_small.gif)
+![alt tag](https://raw.github.com/B0073D/gogol/master/images/leader_0_small.gif)
 
 - Leader for fitness algorithm 1
 
-![alt tag](https://raw.github.com/B0073D/gogol/master/leader_1_small.gif)
+![alt tag](https://raw.github.com/B0073D/gogol/master/images/leader_1_small.gif)
+
+Graph of Fitness of Population
+-----
+
+![alt tag](https://raw.github.com/B0073D/gogol/master/images/stats.jpg)

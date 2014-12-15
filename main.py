@@ -2,6 +2,7 @@ import numpy as np
 import random
 from operator import itemgetter
 import Image
+from matplotlib import pyplot as plt
 """
 The beginnings of this where based on https://jakevdp.github.io/blog/2013/08/07/conways-game-of-life/
 """
@@ -19,6 +20,7 @@ class Population:
         self.mutate_percent = 0.005
         self.mutate_ratio = {'l': 8, 's': 3, 't': 2}
         self.fitness_type = 1
+        self.stats = []
         for iteration in xrange(self.pop_size):
             game = np.zeros(self.game_size, dtype=bool)
             game_random = np.random.random(self.game_size)
@@ -115,11 +117,17 @@ class Population:
         """
         tmp_pop = []
         fittest = sorted(self.population, key=itemgetter('fitness'), reverse=True)
+        if self.stats == []:
+            for being in fittest:
+                self.stats.append([being['fitness']])
+        else:
+            for being in xrange(len(fittest)):
+                self.stats[being].append(fittest[being]['fitness'])
 
         tmp_r_num = self.pop_size / (self.mutate_ratio['l'] + self.mutate_ratio['s'] + self.mutate_ratio['t'])
         second_number = int(tmp_r_num * self.mutate_ratio['s']) - 1
         third_number = int(tmp_r_num * self.mutate_ratio['t']) - 1
-        leader_number = self.pop_size - second_number - third_number - 1
+        leader_number = self.pop_size - second_number - third_number - 3
 
         # Write leader image
         img = Image.new('RGB', (self.game_size[0], self.game_size[1]), "white")  # create a new black image
@@ -157,9 +165,9 @@ class Population:
             print being['count'], being['fitness'], being['iterations']
 
 
-sim = Population(game_size=(50, 50), pop_size=50, percentage=0.99, iter_limit=200)
+sim = Population(game_size=(100, 100), pop_size=50, percentage=0.99, iter_limit=200)
 
-for i in xrange(100):
+for i in xrange(200):
     print 'Run', i
     sim.evolve()
 
@@ -176,3 +184,7 @@ for count in xrange(sim.iter_limit):
 
     game_map = sim.life(game_map.copy())
 
+# Graph fitness
+for iteration in sim.stats:
+    plt.plot([i for i in xrange(len(sim.stats[0]))], iteration)
+plt.savefig('images/stats.jpg')
